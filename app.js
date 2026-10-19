@@ -177,8 +177,13 @@ exportBtn.addEventListener("click",()=>{
     }
     let colorString= savedColors.join(", ");
     navigator.clipboard.writeText(colorString);
+    alert("Colors copied: " + colorString);
+});
 
-})
+// Auto generate on page load
+window.addEventListener("DOMContentLoaded", () => {
+    generateBtn.click();
+});
 
 
 
