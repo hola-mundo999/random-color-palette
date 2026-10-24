@@ -1,70 +1,50 @@
-# 🎨 Paletto — Color Palette Generator
+# 🎨 Paletto — Colour Palette Generator
 
-A beautiful, minimal color palette generator built with vanilla HTML, CSS and JavaScript.  
-Generate random palettes, copy hex codes, save your favorites and export them instantly.
-
----
+Generate harmonious colour palettes in the browser, copy any hex code with one click, and keep
+the ones you like. Built with vanilla HTML, CSS and JavaScript — no frameworks, no build step.
 
 ## ✨ Features
 
-- 🎲 Generate random color palettes with one click
-- 🔢 Control how many colors to generate (1–8)
-- 📋 Copy any hex code with one click
-- 💾 Save palettes to revisit later
-- ♻️ Click any saved palette to load it back into the main view
-- 📤 Export all hex codes at once to clipboard
-- ⌨️ Press **Space** to instantly generate a new palette
-
----
+- **Harmonious palettes**, not random noise: colours are generated in HSL around one base hue
+  - Auto (picks a scheme for you), Analogous, Complementary, Triadic, Split-complementary, Monochrome
+- **1–8 colours** per palette with a stepper
+- **Copy any hex** from its swatch, confirmed with an inline "Copied!" toast
+- **Export all** hex codes to the clipboard in one press
+- **Saved palettes persist** in `localStorage` — reload the page and they are still there
+- Click a saved palette to load it back (hex values are preserved exactly)
+- Delete saved palettes individually; the empty state comes back when the last one goes
+- Duplicate palettes are detected instead of being saved twice
+- **Space bar** generates a new palette, and is ignored while a control or the select has focus
+- Responsive layout: the strip stacks into full-width swatches on phones
 
 ## 🚀 How to Use
 
-1. Use the **+** / **−** buttons to choose how many colors you want
-2. Click **Generate** (or press `Space`) to create a random palette
-3. Hover over any color and click **Copy** to copy its hex code
-4. Click **Save** to save the current palette below
-5. Click any saved palette to load it back into the main view
-6. Click **Export All** to copy all hex codes at once
-
----
+1. Pick a harmony (or leave it on **Auto**) and how many colours you want
+2. Hit **Generate** or press `Space`
+3. Click a swatch's copy icon for its hex, or **Export All** for the whole set
+4. Press **Save** to keep the palette; click a saved palette to bring it back
 
 ## 🛠️ Built With
 
 - HTML
 - CSS
-- JavaScript (Vanilla — no frameworks!)
-
----
+- JavaScript (Vanilla)
+- `localStorage` for saved palettes, Clipboard API with a fallback
 
 ## 📁 Project Structure
 
-```
-paletto/
+```text
+random-color-palette/
 ├── index.html
 ├── style.css
-└── script.js
+├── app.js
+└── README.md
 ```
-
----
-
-## 👩‍💻 Author
-
-**hola-mundo999**  
-Built as a learning project to practice vanilla JavaScript DOM manipulation.
-
----
 
 ## 📌 Concepts Practiced
 
-- DOM selection (`getElementById`, `querySelector`, `querySelectorAll`)
-- Event listeners and event delegation
-- Dynamic HTML generation with template literals
-- Clipboard API
-- Array methods (`push`, `join`)
-- CSS class manipulation (`classList.add`, `classList.remove`)
-
----
-
-## 🌐 Live Demo
-
-Coming soon via GitHub Pages!
+- HSL → hex conversion and colour-wheel relationships
+- Building DOM in fragments instead of string-concatenated `innerHTML`
+- Event delegation for swatch copy and saved-palette actions
+- Persisting and rehydrating state with `localStorage`
+- Keyboard handling that respects focused controls (`preventDefault`, tag checks)
