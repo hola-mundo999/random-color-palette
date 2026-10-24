@@ -10,6 +10,9 @@ let count = 5;
 let currentColors = [];
 let saved = [];
 
+// Swatch index -> hex. Locked swatches survive the next Generate.
+const locks = new Map();
+
 const decBtn = document.getElementById("decreaseBtn");
 const incBtn = document.getElementById("increaseBtn");
 const colorCount = document.getElementById("colorCount");
@@ -21,6 +24,7 @@ const strip = document.getElementById("paletteStrip");
 const savedGrid = document.getElementById("savedGrid");
 const savedCount = document.getElementById("savedCount");
 const pageToast = document.getElementById("pageToast");
+const unlockBtn = document.getElementById("unlockBtn");
 
 let toastTimer = null;
 
@@ -53,6 +57,37 @@ function hslToHex(h, s, l) {
 
 function randomBetween(min, max) {
   return min + Math.random() * (max - min);
+}
+
+/* ── WCAG contrast ── */
+const INK = "#111111";
+const PAPER = "#FFFFFF";
+
+function hexToRgb(hex) {
+  const value = parseInt(String(hex).replace("#", ""), 16);
+  return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+}
+
+function relativeLuminance(hex) {
+  const [r, g, b] = hexToRgb(hex).map((channel) => {
+    const s = channel / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrastRatio(a, b) {
+  const la = relativeLuminance(a);
+  const lb = relativeLuminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+/* WCAG 2.1 grades: AAA ≥ 7, AA ≥ 4.5, AA for large text ≥ 3. */
+function gradeFor(ratio) {
+  if (ratio >= 7) return { label: "AAA", className: "grade-aaa" };
+  if (ratio >= 4.5) return { label: "AA", className: "grade-aa" };
+  if (ratio >= 3) return { label: "AA large", className: "grade-lg" };
+  return { label: "low", className: "grade-low" };
 }
 
 function pickRandom(list) {
@@ -99,15 +134,30 @@ function generateColors(total, harmonyChoice) {
 }
 
 /* ── rendering: palette strip ── */
+const LOCK_ICON =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" ' +
+  'stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+  '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+
 function renderPalette(colors) {
   currentColors = colors.slice();
   strip.replaceChildren();
 
-  colors.forEach((hex) => {
+  colors.forEach((hex, index) => {
     const card = document.createElement("div");
     card.className = "color-card";
     card.style.background = hex;
     card.dataset.hex = hex;
+    card.dataset.index = String(index);
+
+    // Legibility first: the better of black or white text, plus its grade.
+    const onInk = contrastRatio(hex, INK);
+    const onPaper = contrastRatio(hex, PAPER);
+    const bestIsInk = onInk >= onPaper;
+    const bestRatio = Math.max(onInk, onPaper);
+    const grade = gradeFor(bestRatio);
+
+    card.classList.add(bestIsInk ? "dark-text" : "light-text");
 
     const info = document.createElement("div");
     info.className = "color-info";
@@ -115,6 +165,27 @@ function renderPalette(colors) {
     const label = document.createElement("span");
     label.className = "color-hex";
     label.textContent = hex;
+
+    const contrast = document.createElement("span");
+    contrast.className = "contrast-badge " + grade.className;
+    contrast.textContent = grade.label + " \u00b7 " + bestRatio.toFixed(1) + ":1";
+    contrast.title =
+      `Contrast against ${bestIsInk ? "black" : "white"} text: ${bestRatio.toFixed(2)}:1 ` +
+      `(${grade.label}) — WCAG 2.1: AA needs 4.5:1, AAA needs 7:1.`;
+
+    const buttons = document.createElement("span");
+    buttons.className = "card-actions";
+
+    const lock = document.createElement("button");
+    lock.className = "lock-btn";
+    lock.type = "button";
+    lock.dataset.lockIndex = String(index);
+    lock.innerHTML = LOCK_ICON;
+    lock.title = "Keep this colour when regenerating";
+    lock.setAttribute("aria-label", "Lock " + hex);
+    lock.setAttribute("aria-pressed", locks.has(index) ? "true" : "false");
+    if (locks.has(index)) card.classList.add("is-locked");
+    // (syncLockUI keeps this in step after the first render)
 
     const copy = document.createElement("button");
     copy.className = "copy-btn";
@@ -130,7 +201,8 @@ function renderPalette(colors) {
     toast.className = "copy-toast";
     toast.textContent = "Copied!";
 
-    info.append(label, copy);
+    buttons.append(lock, copy);
+    info.append(label, contrast, buttons);
     card.append(info, toast);
     strip.appendChild(card);
   });
@@ -217,13 +289,66 @@ function showPageToast(message, isError = false) {
 /* ── actions ── */
 function generate() {
   const { colors, harmony } = generateColors(count, harmonySelect.value);
-  renderPalette(colors);
+
+  // Locked swatches keep their colour and their slot; only the rest are refreshed.
+  const next = colors.map((hex, index) => (locks.has(index) ? locks.get(index) : hex));
+
+  renderPalette(next);
   harmonySelect.dataset.lastHarmony = harmony;
+}
+
+function toggleLock(index, hex) {
+  if (locks.has(index)) {
+    locks.delete(index);
+  } else {
+    locks.set(index, hex);
+  }
+
+  syncLockUI();
+
+  const lockedCount = locks.size;
+  showPageToast(
+    lockedCount === 0
+      ? "All swatches unlocked."
+      : `${lockedCount} swatch${lockedCount === 1 ? "" : "es"} locked.`,
+    false
+  );
+}
+
+function clearLocks() {
+  locks.clear();
+  syncLockUI();
+}
+
+/* Lock UI: swatch classes, and the "Unlock all" control. */
+function syncLockUI() {
+  strip.querySelectorAll(".color-card").forEach((card) => {
+    const index = Number(card.dataset.index);
+    const locked = locks.has(index);
+    card.classList.toggle("is-locked", locked);
+    const lockBtn = card.querySelector(".lock-btn");
+    if (lockBtn) {
+      lockBtn.setAttribute("aria-pressed", String(locked));
+      lockBtn.title = locked
+        ? "Unlock — this colour changes on the next Generate"
+        : "Keep this colour when regenerating";
+    }
+  });
+
+  if (unlockBtn) unlockBtn.disabled = locks.size === 0;
 }
 
 function setCount(next) {
   count = Math.min(MAX_COLORS, Math.max(MIN_COLORS, next));
   colorCount.textContent = count;
+
+  // A shorter palette cannot carry locks past its last swatch.
+  [...locks.keys()].forEach((index) => {
+    if (index >= count) locks.delete(index);
+  });
+
+  // The strip is re-rendered on the next Generate; keep its lock marks honest now.
+  syncLockUI();
 }
 
 async function copyText(text) {
@@ -271,6 +396,14 @@ incBtn.addEventListener("click", () => setCount(count + 1));
 generateBtn.addEventListener("click", generate);
 saveBtn.addEventListener("click", saveCurrentPalette);
 
+if (unlockBtn) {
+  unlockBtn.addEventListener("click", () => {
+    if (locks.size === 0) return;
+    clearLocks();
+    showPageToast("All swatches unlocked.");
+  });
+}
+
 exportBtn.addEventListener("click", async () => {
   if (currentColors.length === 0) {
     showPageToast("Nothing to export yet.", true);
@@ -283,8 +416,16 @@ exportBtn.addEventListener("click", async () => {
   );
 });
 
-/* copy a swatch */
+/* lock or copy a swatch */
 strip.addEventListener("click", async (event) => {
+  const lockButton = event.target.closest(".lock-btn");
+  if (lockButton) {
+    const index = Number(lockButton.dataset.lockIndex);
+    const card = lockButton.closest(".color-card");
+    toggleLock(index, card.dataset.hex);
+    return;
+  }
+
   const button = event.target.closest(".copy-btn");
   if (!button) return;
 
@@ -317,6 +458,7 @@ savedGrid.addEventListener("click", (event) => {
   if (hexes.length === 0) return;
 
   setCount(hexes.length);
+  clearLocks(); // a loaded palette is its own truth — start with no locks
   renderPalette(hexes);
   showPageToast("Palette loaded.");
 });

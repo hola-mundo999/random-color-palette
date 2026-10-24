@@ -728,3 +728,172 @@ kbd {
 @media (max-width: 640px) {
   .page-toast { bottom: 20px; }
 }
+/* ── SWATCH LOCK + CONTRAST GRADES ───────────────────────────── */
+
+/* Card actions sit together on the right of the info bar */
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lock-btn {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 6px;
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.lock-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.08);
+}
+
+/* Locked swatches: visible ring, filled padlock, gentle marker at the top */
+.color-card.is-locked {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85);
+}
+
+.color-card.is-locked::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  z-index: 3;
+}
+
+.color-card.is-locked .lock-btn {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.95);
+  color: var(--accent);
+}
+
+.color-card.is-locked .lock-btn svg path {
+  fill: currentColor;
+}
+
+/* Keep the info bar reachable without a precise hover: a locked card always shows it */
+.color-card.is-locked .color-info {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.color-card.is-locked:hover {
+  flex: 1;
+}
+
+/* Contrast grades (WCAG 2.1) */
+.contrast-badge {
+  font-family: 'Courier New', monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.grade-aaa { border-color: rgba(255, 255, 255, 0.75); background: rgba(255, 255, 255, 0.4); }
+.grade-aa { border-color: rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.24); }
+.grade-lg { opacity: 0.95; }
+.grade-low { border-style: dashed; opacity: 0.85; }
+
+/* Dark text on light swatches — the badge and hex should not fight the background */
+.color-card.dark-text .color-hex,
+.color-card.dark-text .contrast-badge {
+  color: #1a1814;
+  text-shadow: none;
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+.color-card.dark-text .contrast-badge {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.color-card.dark-text .grade-aaa {
+  border-color: rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.color-card.dark-text .grade-aa {
+  border-color: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.color-card.dark-text .copy-btn,
+.color-card.dark-text .lock-btn {
+  color: #1a1814;
+  border-color: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.color-card.dark-text .copy-btn:hover,
+.color-card.dark-text .lock-btn:hover {
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.color-card.dark-text.is-locked .lock-btn {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.28);
+  color: var(--accent);
+}
+
+.color-card.dark-text.is-locked::after {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* The hex, the badge and the actions need room before hover expands the card */
+.color-info {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Unlock all ─────────────────────────────────────────────── */
+.btn-unlock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-unlock:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-unlock:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .contrast-badge { font-size: 0.58rem; }
+  .color-info { padding: 10px 12px; }
+}

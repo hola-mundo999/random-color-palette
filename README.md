@@ -10,6 +10,11 @@ the ones you like. Built with vanilla HTML, CSS and JavaScript — no frameworks
 - **1–8 colours** per palette with a stepper
 - **Copy any hex** from its swatch, confirmed with an inline "Copied!" toast
 - **Export all** hex codes to the clipboard in one press
+- **Lock a swatch** (the padlock) so the next Generate keeps that colour in its slot while the
+  others refresh; **Unlock all** releases them, and shrinking the palette clears locks it can't hold
+- **WCAG contrast grades on every swatch** — each card computes its real contrast ratio against
+  black or white and shows the grade (AAA ≥ 7, AA ≥ 4.5, AA large ≥ 3), and picks the legible
+  text colour for the hex, badge and buttons
 - **Saved palettes persist** in `localStorage` — reload the page and they are still there
 - Click a saved palette to load it back (hex values are preserved exactly)
 - Delete saved palettes individually; the empty state comes back when the last one goes
